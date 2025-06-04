@@ -59,7 +59,19 @@ def close_db(error):
 @app.route('/')
 def show_entries():
     db = get_db()
-    cur = db.execute('SELECT title, text FROM entries ORDER BY id DESC')
+@app.route('/')
+def show_entries():
+    db = get_db()
+    page = request.args.get('page', 1, type=int)
+    per_page = 10  # Number of entries per page
+    offset = (page - 1) * per_page
+    cur = db.execute('SELECT id, title, text FROM entries ORDER BY id DESC LIMIT ? OFFSET ?', 
+                     (per_page, offset))
+    entries = cur.fetchall()
+    return render_template('show_entries.html', entries=entries, page=page)
+
+
+@app.route('/add', methods=['POST'])
     entries = cur.fetchall()
     return render_template('show_entries.html', entries=entries)
 
@@ -89,6 +101,29 @@ def login():
             flash('You were logged in')
             return redirect(url_for('show_entries'))
     return render_template('login.html', error=error)
+
+
+@app.route('/remove/<int:id>', methods=['POST'])
+def remove_entry(id):
+    if not session.get('logged_in'):
+        abort(401)
+    db = get_db()
+if not session.get('logged_in'):
+        abort(401)
+    db = get_db()
+    cursor = db.cursor()
+    cursor.execute('SELECT * FROM entries WHERE id = ?', (id,))
+    entry = cursor.fetchone()
+    if entry:
+        db.execute('DELETE FROM entries WHERE id = ?', (id,))
+        db.commit()
+        flash('Entry was successfully deleted')
+    else:
+        flash('Entry not found')
+    return redirect(url_for('show_entries'))
+    db.commit()
+    flash('Entry was successfully deleted')
+    return redirect(url_for('show_entries'))
 
 
 @app.route('/logout')
