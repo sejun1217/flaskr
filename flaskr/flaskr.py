@@ -108,7 +108,19 @@ def remove_entry(id):
     if not session.get('logged_in'):
         abort(401)
     db = get_db()
-    db.execute('DELETE FROM entries WHERE id = ?', [id])
+if not session.get('logged_in'):
+        abort(401)
+    db = get_db()
+    cursor = db.cursor()
+    cursor.execute('SELECT * FROM entries WHERE id = ?', (id,))
+    entry = cursor.fetchone()
+    if entry:
+        db.execute('DELETE FROM entries WHERE id = ?', (id,))
+        db.commit()
+        flash('Entry was successfully deleted')
+    else:
+        flash('Entry not found')
+    return redirect(url_for('show_entries'))
     db.commit()
     flash('Entry was successfully deleted')
     return redirect(url_for('show_entries'))
